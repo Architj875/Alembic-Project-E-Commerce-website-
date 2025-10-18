@@ -153,7 +153,7 @@ FastAPI automatically generates interactive API documentation:
 - `POST /inventory/{inventory_id}/restock` - Restock inventory
 - `DELETE /inventory/{inventory_id}` - Delete inventory
 
-### Payments ⭐ NEW
+### Payments
 - `POST /payments/` - Create payment
 - `GET /payments/` - Get all payments (with filtering)
 - `GET /payments/{payment_id}` - Get payment by ID
@@ -161,7 +161,7 @@ FastAPI automatically generates interactive API documentation:
 - `PUT /payments/{payment_id}` - Update payment
 - `DELETE /payments/{payment_id}` - Delete payment
 
-### Order Tracking ⭐ NEW
+### Order Tracking 
 - `POST /order-tracking/` - Create tracking entry
 - `GET /order-tracking/` - Get all tracking entries
 - `GET /order-tracking/{tracking_id}` - Get tracking entry by ID
@@ -408,9 +408,6 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 ## 📝 License
 
 This project is open source and available under the MIT License.
-
-## 🤝 Contributing
-
 Contributions, issues, and feature requests are welcome!
 
 ## 📧 Contact
