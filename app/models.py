@@ -1,4 +1,14 @@
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -8,6 +18,7 @@ from .database import Base
 
 class UserRole(str, enum.Enum):
     """Enum for user roles."""
+
     CUSTOMER = "customer"
     ADMIN = "admin"
     SUPERADMIN = "superadmin"
@@ -15,6 +26,7 @@ class UserRole(str, enum.Enum):
 
 class User(Base):
     """Represents a user in the database with authentication and role-based access."""
+
     __tablename__ = "users"
 
     # Primary Key
@@ -43,15 +55,24 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationships
-    sessions = relationship("CustomerSession", back_populates="user", cascade="all, delete-orphan")
-    shopping_carts = relationship("ShoppingCart", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship(
+        "CustomerSession", back_populates="user", cascade="all, delete-orphan"
+    )
+    shopping_carts = relationship(
+        "ShoppingCart", back_populates="user", cascade="all, delete-orphan"
+    )
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-    addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
-    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
+    addresses = relationship(
+        "Address", back_populates="user", cascade="all, delete-orphan"
+    )
+    reviews = relationship(
+        "Review", back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class CustomerSession(Base):
     """Represents a user login session."""
+
     __tablename__ = "customer_Sessions"
 
     # Primary Key
@@ -77,6 +98,7 @@ class CustomerSession(Base):
 
 class Product(Base):
     """Represents a product in the inventory."""
+
     __tablename__ = "products"
 
     # Primary Key
@@ -97,12 +119,15 @@ class Product(Base):
     # Relationships
     categories = relationship("ProductCategory", back_populates="product")
     cart_items = relationship("ShoppingCartItem", back_populates="product")
-    reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
+    reviews = relationship(
+        "Review", back_populates="product", cascade="all, delete-orphan"
+    )
     # inventory = relationship("Inventory", back_populates="product", uselist=False, cascade="all, delete-orphan")
 
 
 class ProductCategory(Base):
     """Represents a product category."""
+
     __tablename__ = "product_categories"
 
     # Primary Key
@@ -127,6 +152,7 @@ class ProductCategory(Base):
 
 class ShoppingCart(Base):
     """Represents a shopping cart for a user."""
+
     __tablename__ = "shopping_carts"
 
     # Primary Key
@@ -136,19 +162,24 @@ class ShoppingCart(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Cart Information
-    last_modified = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    last_modified = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     user = relationship("User", back_populates="shopping_carts")
-    items = relationship("ShoppingCartItem", back_populates="cart", cascade="all, delete-orphan")
+    items = relationship(
+        "ShoppingCartItem", back_populates="cart", cascade="all, delete-orphan"
+    )
     orders = relationship("Order", back_populates="cart")
 
 
 class ShoppingCartItem(Base):
     """Represents an item in a shopping cart."""
+
     __tablename__ = "shopping_cart_items"
 
     # Primary Key
@@ -172,6 +203,7 @@ class ShoppingCartItem(Base):
 
 class Order(Base):
     """Represents a user order."""
+
     __tablename__ = "orders"
 
     # Primary Key
@@ -194,12 +226,17 @@ class Order(Base):
     # Relationships
     user = relationship("User", back_populates="orders")
     cart = relationship("ShoppingCart", back_populates="orders")
-    payments = relationship("Payment", back_populates="order", cascade="all, delete-orphan")
-    tracking_history = relationship("OrderTracking", back_populates="order", cascade="all, delete-orphan")
+    payments = relationship(
+        "Payment", back_populates="order", cascade="all, delete-orphan"
+    )
+    tracking_history = relationship(
+        "OrderTracking", back_populates="order", cascade="all, delete-orphan"
+    )
 
 
 class Address(Base):
     """Represents a user address."""
+
     __tablename__ = "addresses"
 
     # Primary Key
@@ -226,6 +263,7 @@ class Address(Base):
 
 class Review(Base):
     """Represents a product review by a user."""
+
     __tablename__ = "reviews"
 
     # Primary Key
@@ -251,6 +289,7 @@ class Review(Base):
 
 class Inventory(Base):
     """Represents inventory tracking for products."""
+
     __tablename__ = "inventory"
 
     # Primary Key
@@ -274,6 +313,7 @@ class Inventory(Base):
 
 class Payment(Base):
     """Represents a payment for an order."""
+
     __tablename__ = "payments"
 
     # Primary Key
@@ -298,6 +338,7 @@ class Payment(Base):
 
 class OrderTracking(Base):
     """Represents tracking information for an order."""
+
     __tablename__ = "order_tracking"
 
     # Primary Key

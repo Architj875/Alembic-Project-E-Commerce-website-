@@ -1,6 +1,7 @@
 """
 Order Tracking router for managing order tracking information.
 """
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,18 @@ from .. import crud, models, schemas
 from ..dependencies import require_admin
 from ..database import get_db
 
-router = APIRouter(
-    prefix="/order-tracking",
-    tags=["order-tracking"]
-)
+router = APIRouter(prefix="/order-tracking", tags=["order-tracking"])
 
 
 @router.post(
     "/",
     response_model=schemas.OrderTrackingResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 def create_tracking_entry(
     tracking: schemas.OrderTrackingCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Create a new tracking entry for an order.
@@ -44,7 +42,7 @@ def create_tracking_entry(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Order with ID {tracking.order_id} not found"
+            detail=f"Order with ID {tracking.order_id} not found",
         )
 
     return crud.create_order_tracking(db=db, tracking=tracking)
@@ -55,7 +53,7 @@ def get_all_tracking_entries(
     skip: int = 0,
     limit: int = 100,
     status: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve all tracking entries with optional filtering.
@@ -70,10 +68,7 @@ def get_all_tracking_entries(
         A list of tracking entries.
     """
     tracking_entries = crud.get_all_tracking_entries(
-        db,
-        skip=skip,
-        limit=limit,
-        status=status
+        db, skip=skip, limit=limit, status=status
     )
     return tracking_entries
 
@@ -97,17 +92,14 @@ def get_tracking_entry(tracking_id: int, db: Session = Depends(get_db)):
     if tracking is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tracking entry with ID {tracking_id} not found"
+            detail=f"Tracking entry with ID {tracking_id} not found",
         )
     return tracking
 
 
 @router.get("/orders/{order_id}", response_model=List[schemas.OrderTrackingResponse])
 def get_order_tracking_history(
-    order_id: int,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
+    order_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 ):
     """
     Retrieve tracking history for a specific order.
@@ -129,14 +121,11 @@ def get_order_tracking_history(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Order with ID {order_id} not found"
+            detail=f"Order with ID {order_id} not found",
         )
 
     tracking_history = crud.get_order_tracking_history(
-        db,
-        order_id=order_id,
-        skip=skip,
-        limit=limit
+        db, order_id=order_id, skip=skip, limit=limit
     )
     return tracking_history
 
@@ -161,14 +150,14 @@ def get_latest_tracking_status(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Order with ID {order_id} not found"
+            detail=f"Order with ID {order_id} not found",
         )
 
     latest_tracking = crud.get_latest_tracking_status(db, order_id=order_id)
     if latest_tracking is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No tracking information found for order {order_id}"
+            detail=f"No tracking information found for order {order_id}",
         )
     return latest_tracking
 
@@ -178,7 +167,7 @@ def update_tracking_entry(
     tracking_id: int,
     tracking_update: schemas.OrderTrackingUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Update a tracking entry's information.
@@ -195,20 +184,22 @@ def update_tracking_entry(
         HTTPException: If tracking entry is not found.
     """
     tracking = crud.update_order_tracking(
-        db,
-        tracking_id=tracking_id,
-        tracking_update=tracking_update
+        db, tracking_id=tracking_id, tracking_update=tracking_update
     )
     if tracking is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tracking entry with ID {tracking_id} not found"
+            detail=f"Tracking entry with ID {tracking_id} not found",
         )
     return tracking
 
 
 @router.delete("/{tracking_id}", response_model=schemas.OrderTrackingResponse)
-def delete_tracking_entry(tracking_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+def delete_tracking_entry(
+    tracking_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
     """
     Delete a tracking entry.
 
@@ -226,7 +217,6 @@ def delete_tracking_entry(tracking_id: int, db: Session = Depends(get_db), curre
     if tracking is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Tracking entry with ID {tracking_id} not found"
+            detail=f"Tracking entry with ID {tracking_id} not found",
         )
     return tracking
-

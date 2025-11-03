@@ -1,6 +1,7 @@
 """
 Reviews router for managing product reviews.
 """
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,16 @@ from .. import crud, models, schemas
 from ..database import get_db
 from ..dependencies import get_current_active_user
 
-router = APIRouter(
-    prefix="/reviews",
-    tags=["reviews"]
-)
+router = APIRouter(prefix="/reviews", tags=["reviews"])
 
 
 @router.post(
-    "/",
-    response_model=schemas.ReviewResponse,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=schemas.ReviewResponse, status_code=status.HTTP_201_CREATED
 )
 def create_review(
     review: schemas.ReviewCreate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create a new product review for the authenticated user.
@@ -45,7 +41,7 @@ def create_review(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {review.product_id} not found"
+            detail=f"Product with ID {review.product_id} not found",
         )
 
     return crud.create_review(db=db, user_id=current_user.id, review=review)
@@ -58,7 +54,7 @@ def get_reviews(
     product_id: Optional[int] = None,
     user_id: Optional[int] = None,
     min_rating: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a list of reviews with optional filtering.
@@ -78,7 +74,7 @@ def get_reviews(
     if min_rating is not None and (min_rating < 1 or min_rating > 5):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="min_rating must be between 1 and 5"
+            detail="min_rating must be between 1 and 5",
         )
 
     reviews = crud.get_reviews(
@@ -87,7 +83,7 @@ def get_reviews(
         limit=limit,
         product_id=product_id,
         user_id=user_id,
-        min_rating=min_rating
+        min_rating=min_rating,
     )
     return reviews
 
@@ -111,7 +107,7 @@ def get_review(review_id: int, db: Session = Depends(get_db)):
     if review is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Review with ID {review_id} not found"
+            detail=f"Review with ID {review_id} not found",
         )
     return review
 
@@ -136,7 +132,7 @@ def get_product_average_rating(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
+            detail=f"Product with ID {product_id} not found",
         )
 
     # Get average rating
@@ -148,7 +144,7 @@ def get_product_average_rating(product_id: int, db: Session = Depends(get_db)):
     return {
         "product_id": product_id,
         "average_rating": round(avg_rating, 2) if avg_rating else 0,
-        "review_count": review_count
+        "review_count": review_count,
     }
 
 
@@ -157,7 +153,7 @@ def update_review(
     review_id: int,
     review_update: schemas.ReviewUpdate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update a review's information.
@@ -179,20 +175,18 @@ def update_review(
     if review is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Review with ID {review_id} not found"
+            detail=f"Review with ID {review_id} not found",
         )
 
     # Verify the review belongs to the current user
     if review.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only update your own reviews"
+            detail="You can only update your own reviews",
         )
 
     updated_review = crud.update_review(
-        db,
-        review_id=review_id,
-        review_update=review_update
+        db, review_id=review_id, review_update=review_update
     )
     return updated_review
 
@@ -201,7 +195,7 @@ def update_review(
 def delete_review(
     review_id: int,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete a review.
@@ -222,16 +216,15 @@ def delete_review(
     if review is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Review with ID {review_id} not found"
+            detail=f"Review with ID {review_id} not found",
         )
 
     # Verify the review belongs to the current user
     if review.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own reviews"
+            detail="You can only delete your own reviews",
         )
 
     deleted_review = crud.delete_review(db, review_id=review_id)
     return deleted_review
-

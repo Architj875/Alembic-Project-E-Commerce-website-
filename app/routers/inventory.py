@@ -1,6 +1,7 @@
 """
 Inventory router for managing product inventory.
 """
+
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,16 @@ from .. import crud, models, schemas
 from ..dependencies import require_admin
 from ..database import get_db
 
-router = APIRouter(
-    prefix="/inventory",
-    tags=["inventory"]
-)
+router = APIRouter(prefix="/inventory", tags=["inventory"])
 
 
 @router.post(
-    "/",
-    response_model=schemas.InventoryResponse,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=schemas.InventoryResponse, status_code=status.HTTP_201_CREATED
 )
 def create_inventory(
     inventory: schemas.InventoryCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Create a new inventory record for a product.
@@ -44,15 +40,17 @@ def create_inventory(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {inventory.product_id} not found"
+            detail=f"Product with ID {inventory.product_id} not found",
         )
 
     # Check if inventory already exists for this product
-    existing_inventory = crud.get_inventory_by_product(db, product_id=inventory.product_id)
+    existing_inventory = crud.get_inventory_by_product(
+        db, product_id=inventory.product_id
+    )
     if existing_inventory:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Inventory already exists for product {inventory.product_id}"
+            detail=f"Inventory already exists for product {inventory.product_id}",
         )
 
     return crud.create_inventory(db=db, inventory=inventory)
@@ -63,7 +61,7 @@ def get_inventories(
     skip: int = 0,
     limit: int = 100,
     low_stock_only: bool = False,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a list of inventory records with optional filtering.
@@ -78,10 +76,7 @@ def get_inventories(
         A list of inventory records.
     """
     inventories = crud.get_inventories(
-        db,
-        skip=skip,
-        limit=limit,
-        low_stock_only=low_stock_only
+        db, skip=skip, limit=limit, low_stock_only=low_stock_only
     )
     return inventories
 
@@ -105,7 +100,7 @@ def get_inventory(inventory_id: int, db: Session = Depends(get_db)):
     if inventory is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Inventory with ID {inventory_id} not found"
+            detail=f"Inventory with ID {inventory_id} not found",
         )
     return inventory
 
@@ -130,14 +125,14 @@ def get_inventory_by_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
+            detail=f"Product with ID {product_id} not found",
         )
 
     inventory = crud.get_inventory_by_product(db, product_id=product_id)
     if inventory is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Inventory not found for product {product_id}"
+            detail=f"Inventory not found for product {product_id}",
         )
     return inventory
 
@@ -147,7 +142,7 @@ def update_inventory(
     inventory_id: int,
     inventory_update: schemas.InventoryUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Update an inventory record's information.
@@ -164,14 +159,12 @@ def update_inventory(
         HTTPException: If inventory record is not found.
     """
     inventory = crud.update_inventory(
-        db,
-        inventory_id=inventory_id,
-        inventory_update=inventory_update
+        db, inventory_id=inventory_id, inventory_update=inventory_update
     )
     if inventory is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Inventory with ID {inventory_id} not found"
+            detail=f"Inventory with ID {inventory_id} not found",
         )
     return inventory
 
@@ -181,7 +174,7 @@ def restock_inventory(
     inventory_id: int,
     restock: schemas.InventoryRestock,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Restock inventory by adding quantity.
@@ -198,21 +191,22 @@ def restock_inventory(
         HTTPException: If inventory record is not found.
     """
     inventory = crud.restock_inventory(
-        db,
-        inventory_id=inventory_id,
-        quantity_to_add=restock.quantity_to_add
+        db, inventory_id=inventory_id, quantity_to_add=restock.quantity_to_add
     )
     if inventory is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Inventory with ID {inventory_id} not found"
+            detail=f"Inventory with ID {inventory_id} not found",
         )
     return inventory
 
 
 @router.delete("/{inventory_id}", response_model=schemas.InventoryResponse)
-def delete_inventory(inventory_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
-    
+def delete_inventory(
+    inventory_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
     """
     Delete an inventory record.
 
@@ -230,7 +224,6 @@ def delete_inventory(inventory_id: int, db: Session = Depends(get_db), current_u
     if inventory is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Inventory with ID {inventory_id} not found"
+            detail=f"Inventory with ID {inventory_id} not found",
         )
     return inventory
-

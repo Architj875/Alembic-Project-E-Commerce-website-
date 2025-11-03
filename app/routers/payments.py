@@ -1,6 +1,7 @@
 """
 Payments router for managing order payments.
 """
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,16 @@ from .. import crud, models, schemas
 from ..database import get_db
 from ..dependencies import get_current_active_user
 
-router = APIRouter(
-    prefix="/payments",
-    tags=["payments"]
-)
+router = APIRouter(prefix="/payments", tags=["payments"])
 
 
 @router.post(
-    "/",
-    response_model=schemas.PaymentResponse,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=schemas.PaymentResponse, status_code=status.HTTP_201_CREATED
 )
 def create_payment(
     payment: schemas.PaymentCreate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create a new payment for an order.
@@ -45,25 +41,24 @@ def create_payment(
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Order with ID {payment.order_id} not found"
+            detail=f"Order with ID {payment.order_id} not found",
         )
 
     # Verify the order belongs to the current user
     if order.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only create payments for your own orders"
+            detail="You can only create payments for your own orders",
         )
 
     # Check if transaction_id already exists
     existing_payment = crud.get_payment_by_transaction(
-        db,
-        transaction_id=payment.transaction_id
+        db, transaction_id=payment.transaction_id
     )
     if existing_payment:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Payment with transaction ID {payment.transaction_id} already exists"
+            detail=f"Payment with transaction ID {payment.transaction_id} already exists",
         )
 
     return crud.create_payment(db=db, payment=payment)
@@ -76,7 +71,7 @@ def get_payments(
     order_id: Optional[int] = None,
     payment_status: Optional[str] = None,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a list of payments for the authenticated user's orders.
@@ -101,20 +96,18 @@ def get_payments(
         if not order or order.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only view payments for your own orders"
+                detail="You can only view payments for your own orders",
             )
 
     # Get all payments for user's orders
     payments = crud.get_payments(
-        db,
-        skip=skip,
-        limit=limit,
-        order_id=order_id,
-        payment_status=payment_status
+        db, skip=skip, limit=limit, order_id=order_id, payment_status=payment_status
     )
 
     # Filter to only include payments for user's orders
-    user_payments = [p for p in payments if crud.get_order(db, p.order_id).user_id == current_user.id]
+    user_payments = [
+        p for p in payments if crud.get_order(db, p.order_id).user_id == current_user.id
+    ]
 
     return user_payments
 
@@ -123,7 +116,7 @@ def get_payments(
 def get_payment(
     payment_id: int,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a specific payment by ID.
@@ -143,7 +136,7 @@ def get_payment(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Payment with ID {payment_id} not found"
+            detail=f"Payment with ID {payment_id} not found",
         )
 
     # Verify the payment's order belongs to the current user
@@ -151,7 +144,7 @@ def get_payment(
     if not order or order.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only view payments for your own orders"
+            detail="You can only view payments for your own orders",
         )
 
     return payment
@@ -161,7 +154,7 @@ def get_payment(
 def get_payment_by_transaction(
     transaction_id: str,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a payment by transaction ID.
@@ -181,7 +174,7 @@ def get_payment_by_transaction(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Payment with transaction ID {transaction_id} not found"
+            detail=f"Payment with transaction ID {transaction_id} not found",
         )
 
     # Verify the payment's order belongs to the current user
@@ -189,7 +182,7 @@ def get_payment_by_transaction(
     if not order or order.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only view payments for your own orders"
+            detail="You can only view payments for your own orders",
         )
 
     return payment
@@ -200,7 +193,7 @@ def update_payment(
     payment_id: int,
     payment_update: schemas.PaymentUpdate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update a payment's information.
@@ -222,7 +215,7 @@ def update_payment(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Payment with ID {payment_id} not found"
+            detail=f"Payment with ID {payment_id} not found",
         )
 
     # Verify the payment's order belongs to the current user
@@ -230,13 +223,11 @@ def update_payment(
     if not order or order.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only update payments for your own orders"
+            detail="You can only update payments for your own orders",
         )
 
     updated_payment = crud.update_payment(
-        db,
-        payment_id=payment_id,
-        payment_update=payment_update
+        db, payment_id=payment_id, payment_update=payment_update
     )
     return updated_payment
 
@@ -245,7 +236,7 @@ def update_payment(
 def delete_payment(
     payment_id: int,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete a payment.
@@ -266,7 +257,7 @@ def delete_payment(
     if payment is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Payment with ID {payment_id} not found"
+            detail=f"Payment with ID {payment_id} not found",
         )
 
     # Verify the payment's order belongs to the current user
@@ -274,9 +265,8 @@ def delete_payment(
     if not order or order.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete payments for your own orders"
+            detail="You can only delete payments for your own orders",
         )
 
     deleted_payment = crud.delete_payment(db, payment_id=payment_id)
     return deleted_payment
-

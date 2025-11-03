@@ -2,6 +2,7 @@
 Authentication router for user signup, login, and logout.
 Maintains backward compatibility with customer-based endpoints.
 """
+
 from datetime import datetime, timedelta
 from typing import List
 
@@ -12,17 +13,14 @@ from .. import crud, models, schemas
 from ..auth import create_access_token, generate_session_id, verify_password
 from ..database import get_db
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["authentication"]
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+@router.post(
+    "/signup", response_model=schemas.TokenResponse, status_code=status.HTTP_201_CREATED
 )
-
-
-@router.post("/signup", response_model=schemas.TokenResponse, status_code=status.HTTP_201_CREATED)
 def signup(
-    user_data: schemas.UserSignup,
-    request: Request,
-    db: Session = Depends(get_db)
+    user_data: schemas.UserSignup, request: Request, db: Session = Depends(get_db)
 ):
     """
     Register a new user account.
@@ -45,15 +43,14 @@ def signup(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
+            detail="Username already registered",
         )
 
     # Check if email already exists
     existing_email = crud.get_user_by_email(db, email=user_data.email)
     if existing_email:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Create new user with customer role
@@ -65,10 +62,7 @@ def signup(
 
     # Create session record
     crud.create_user_session(
-        db=db,
-        user_id=db_user.id,
-        session_id=session_id,
-        ip_address=ip_address
+        db=db, user_id=db_user.id, session_id=session_id, ip_address=ip_address
     )
 
     # Create access token
@@ -76,18 +70,12 @@ def signup(
         data={"sub": db_user.username, "session_id": session_id, "user_id": db_user.id}
     )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": db_user
-    }
+    return {"access_token": access_token, "token_type": "bearer", "user": db_user}
 
 
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(
-    credentials: schemas.UserLogin,
-    request: Request,
-    db: Session = Depends(get_db)
+    credentials: schemas.UserLogin, request: Request, db: Session = Depends(get_db)
 ):
     """
     Authenticate a user and create a new session.
@@ -123,8 +111,7 @@ def login(
     # Check if account is active
     if not db_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is inactive"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive"
         )
 
     # Generate new session
@@ -133,10 +120,7 @@ def login(
 
     # Create session record
     crud.create_user_session(
-        db=db,
-        user_id=db_user.id,
-        session_id=session_id,
-        ip_address=ip_address
+        db=db, user_id=db_user.id, session_id=session_id, ip_address=ip_address
     )
 
     # Create access token
@@ -144,18 +128,11 @@ def login(
         data={"sub": db_user.username, "session_id": session_id, "user_id": db_user.id}
     )
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": db_user
-    }
+    return {"access_token": access_token, "token_type": "bearer", "user": db_user}
 
 
 @router.post("/logout", response_model=schemas.LogoutResponse)
-def logout(
-    session_id: str,
-    db: Session = Depends(get_db)
-):
+def logout(session_id: str, db: Session = Depends(get_db)):
     """
     End a user session (logout).
 
@@ -175,21 +152,19 @@ def logout(
     if not db_session:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found or already ended"
+            detail="Session not found or already ended",
         )
 
     return {
         "message": "Successfully logged out",
         "session_id": session_id,
-        "logout_time": db_session.logout_time
+        "logout_time": db_session.logout_time,
     }
 
 
 @router.get("/sessions/{user_id}", response_model=List[schemas.UserSessionResponse])
 def get_user_sessions(
-    user_id: int,
-    active_only: bool = False,
-    db: Session = Depends(get_db)
+    user_id: int, active_only: bool = False, db: Session = Depends(get_db)
 ):
     """
     Get all sessions for a user.
@@ -209,16 +184,10 @@ def get_user_sessions(
     db_user = crud.get_user(db, user_id=user_id)
     if not db_user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Get sessions
-    sessions = crud.get_user_sessions(
-        db=db,
-        user_id=user_id,
-        active_only=active_only
-    )
+    sessions = crud.get_user_sessions(db=db, user_id=user_id, active_only=active_only)
 
     return sessions
-

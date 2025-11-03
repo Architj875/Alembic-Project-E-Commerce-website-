@@ -10,6 +10,7 @@ from .auth import get_password_hash, generate_session_id
 
 # User CRUD Operations
 
+
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
     """
     Fetches a single user by their unique ID.
@@ -53,8 +54,11 @@ def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
 
 
 def get_users(
-    db: Session, skip: int = 0, limit: int = 100, username: Optional[str] = None,
-    role: Optional[models.UserRole] = None
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    username: Optional[str] = None,
+    role: Optional[models.UserRole] = None,
 ) -> List[models.User]:
     """
     Fetches a list of users with optional filtering and pagination.
@@ -77,7 +81,11 @@ def get_users(
     return query.offset(skip).limit(limit).all()
 
 
-def create_user(db: Session, user: schemas.UserSignup, role: models.UserRole = models.UserRole.CUSTOMER) -> models.User:
+def create_user(
+    db: Session,
+    user: schemas.UserSignup,
+    role: models.UserRole = models.UserRole.CUSTOMER,
+) -> models.User:
     """
     Creates a new user with hashed password.
 
@@ -98,7 +106,7 @@ def create_user(db: Session, user: schemas.UserSignup, role: models.UserRole = m
         phone_number=user.phone_number,
         address=user.address,
         role=role,
-        is_superadmin=(role == models.UserRole.SUPERADMIN)
+        is_superadmin=(role == models.UserRole.SUPERADMIN),
     )
     db.add(db_user)
     db.commit()
@@ -207,11 +215,9 @@ create_customer = create_user
 
 # User Session CRUD Operations
 
+
 def create_user_session(
-    db: Session,
-    user_id: int,
-    session_id: str,
-    ip_address: Optional[str] = None
+    db: Session, user_id: int, session_id: str, ip_address: Optional[str] = None
 ) -> models.CustomerSession:
     """
     Creates a new user session.
@@ -226,10 +232,7 @@ def create_user_session(
         The newly created CustomerSession model instance.
     """
     db_session = models.CustomerSession(
-        user_id=user_id,
-        session_id=session_id,
-        ip_address=ip_address,
-        is_active=True
+        user_id=user_id, session_id=session_id, ip_address=ip_address, is_active=True
     )
     db.add(db_session)
     db.commit()
@@ -237,7 +240,9 @@ def create_user_session(
     return db_session
 
 
-def get_active_session(db: Session, session_id: str) -> Optional[models.CustomerSession]:
+def get_active_session(
+    db: Session, session_id: str
+) -> Optional[models.CustomerSession]:
     """
     Fetches an active session by session ID.
 
@@ -248,10 +253,14 @@ def get_active_session(db: Session, session_id: str) -> Optional[models.Customer
     Returns:
         The CustomerSession model instance if found and active, otherwise None.
     """
-    return db.query(models.CustomerSession).filter(
-        models.CustomerSession.session_id == session_id,
-        models.CustomerSession.is_active == True
-    ).first()
+    return (
+        db.query(models.CustomerSession)
+        .filter(
+            models.CustomerSession.session_id == session_id,
+            models.CustomerSession.is_active == True,
+        )
+        .first()
+    )
 
 
 def end_user_session(db: Session, session_id: str) -> Optional[models.CustomerSession]:
@@ -270,6 +279,7 @@ def end_user_session(db: Session, session_id: str) -> Optional[models.CustomerSe
         return None
 
     from datetime import timezone
+
     db_session.logout_time = datetime.now(timezone.utc)
     db_session.is_active = False
     db.commit()
@@ -278,9 +288,7 @@ def end_user_session(db: Session, session_id: str) -> Optional[models.CustomerSe
 
 
 def get_user_sessions(
-    db: Session,
-    user_id: int,
-    active_only: bool = False
+    db: Session, user_id: int, active_only: bool = False
 ) -> List[models.CustomerSession]:
     """
     Fetches all sessions for a user.
@@ -308,6 +316,7 @@ get_customer_sessions = get_user_sessions
 
 
 # Product CRUD Operations
+
 
 def get_product(db: Session, product_id: int) -> Optional[models.Product]:
     """
@@ -338,10 +347,7 @@ def get_product_by_sku(db: Session, sku: str) -> Optional[models.Product]:
 
 
 def get_products(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100,
-    name: Optional[str] = None
+    db: Session, skip: int = 0, limit: int = 100, name: Optional[str] = None
 ) -> List[models.Product]:
     """
     Fetches a list of products with optional filtering and pagination.
@@ -385,9 +391,7 @@ def create_product(db: Session, product: schemas.ProductCreate) -> models.Produc
 
 
 def update_product(
-    db: Session,
-    product_id: int,
-    product_update: schemas.ProductUpdate
+    db: Session, product_id: int, product_update: schemas.ProductUpdate
 ) -> Optional[models.Product]:
     """
     Updates an existing product's information.
@@ -436,7 +440,10 @@ def delete_product(db: Session, product_id: int) -> Optional[models.Product]:
 # Product Category CRUD Operations
 # ============================================================================
 
-def get_product_category(db: Session, category_id: int) -> Optional[models.ProductCategory]:
+
+def get_product_category(
+    db: Session, category_id: int
+) -> Optional[models.ProductCategory]:
     """
     Retrieves a product category by its ID.
 
@@ -447,9 +454,11 @@ def get_product_category(db: Session, category_id: int) -> Optional[models.Produ
     Returns:
         The ProductCategory model instance, or None if not found.
     """
-    return db.query(models.ProductCategory).filter(
-        models.ProductCategory.id == category_id
-    ).first()
+    return (
+        db.query(models.ProductCategory)
+        .filter(models.ProductCategory.id == category_id)
+        .first()
+    )
 
 
 def get_product_categories(
@@ -457,7 +466,7 @@ def get_product_categories(
     skip: int = 0,
     limit: int = 100,
     product_id: Optional[int] = None,
-    is_active: Optional[bool] = None
+    is_active: Optional[bool] = None,
 ) -> List[models.ProductCategory]:
     """
     Retrieves a list of product categories with optional filtering.
@@ -484,8 +493,7 @@ def get_product_categories(
 
 
 def create_product_category(
-    db: Session,
-    category: schemas.ProductCategoryCreate
+    db: Session, category: schemas.ProductCategoryCreate
 ) -> models.ProductCategory:
     """
     Creates a new product category in the database.
@@ -502,7 +510,7 @@ def create_product_category(
         category_id=category.category_id,
         category_name=category.category_name,
         description=category.description,
-        is_active=category.is_active
+        is_active=category.is_active,
     )
     db.add(db_category)
     db.commit()
@@ -511,9 +519,7 @@ def create_product_category(
 
 
 def update_product_category(
-    db: Session,
-    category_id: int,
-    category_update: schemas.ProductCategoryUpdate
+    db: Session, category_id: int, category_update: schemas.ProductCategoryUpdate
 ) -> Optional[models.ProductCategory]:
     """
     Updates an existing product category's information.
@@ -540,8 +546,7 @@ def update_product_category(
 
 
 def delete_product_category(
-    db: Session,
-    category_id: int
+    db: Session, category_id: int
 ) -> Optional[models.ProductCategory]:
     """
     Deletes a product category from the database.
@@ -565,6 +570,7 @@ def delete_product_category(
 # Shopping Cart CRUD Operations
 # ============================================================================
 
+
 def get_shopping_cart(db: Session, cart_id: int) -> Optional[models.ShoppingCart]:
     """
     Retrieves a shopping cart by its ID.
@@ -576,15 +582,12 @@ def get_shopping_cart(db: Session, cart_id: int) -> Optional[models.ShoppingCart
     Returns:
         The ShoppingCart model instance, or None if not found.
     """
-    return db.query(models.ShoppingCart).filter(
-        models.ShoppingCart.id == cart_id
-    ).first()
+    return (
+        db.query(models.ShoppingCart).filter(models.ShoppingCart.id == cart_id).first()
+    )
 
 
-def get_user_cart(
-    db: Session,
-    user_id: int
-) -> Optional[models.ShoppingCart]:
+def get_user_cart(db: Session, user_id: int) -> Optional[models.ShoppingCart]:
     """
     Retrieves the active shopping cart for a user.
 
@@ -595,15 +598,14 @@ def get_user_cart(
     Returns:
         The ShoppingCart model instance, or None if not found.
     """
-    return db.query(models.ShoppingCart).filter(
-        models.ShoppingCart.user_id == user_id
-    ).first()
+    return (
+        db.query(models.ShoppingCart)
+        .filter(models.ShoppingCart.user_id == user_id)
+        .first()
+    )
 
 
-def create_shopping_cart(
-    db: Session,
-    user_id: int
-) -> models.ShoppingCart:
+def create_shopping_cart(db: Session, user_id: int) -> models.ShoppingCart:
     """
     Creates a new shopping cart for a user.
 
@@ -626,9 +628,7 @@ get_customer_cart = get_user_cart
 
 
 def add_item_to_cart(
-    db: Session,
-    cart_id: int,
-    item: schemas.ShoppingCartItemCreate
+    db: Session, cart_id: int, item: schemas.ShoppingCartItemCreate
 ) -> models.ShoppingCartItem:
     """
     Adds an item to a shopping cart or updates quantity if it exists.
@@ -642,10 +642,14 @@ def add_item_to_cart(
         The ShoppingCartItem model instance.
     """
     # Check if item already exists in cart
-    existing_item = db.query(models.ShoppingCartItem).filter(
-        models.ShoppingCartItem.cart_id == cart_id,
-        models.ShoppingCartItem.product_id == item.product_id
-    ).first()
+    existing_item = (
+        db.query(models.ShoppingCartItem)
+        .filter(
+            models.ShoppingCartItem.cart_id == cart_id,
+            models.ShoppingCartItem.product_id == item.product_id,
+        )
+        .first()
+    )
 
     if existing_item:
         # Update quantity
@@ -656,9 +660,7 @@ def add_item_to_cart(
     else:
         # Create new item
         db_item = models.ShoppingCartItem(
-            cart_id=cart_id,
-            product_id=item.product_id,
-            quantity=item.quantity
+            cart_id=cart_id, product_id=item.product_id, quantity=item.quantity
         )
         db.add(db_item)
         db.commit()
@@ -667,9 +669,7 @@ def add_item_to_cart(
 
 
 def update_cart_item(
-    db: Session,
-    item_id: int,
-    item_update: schemas.ShoppingCartItemUpdate
+    db: Session, item_id: int, item_update: schemas.ShoppingCartItemUpdate
 ) -> Optional[models.ShoppingCartItem]:
     """
     Updates a cart item's quantity.
@@ -682,9 +682,11 @@ def update_cart_item(
     Returns:
         The updated ShoppingCartItem model instance, or None if not found.
     """
-    db_item = db.query(models.ShoppingCartItem).filter(
-        models.ShoppingCartItem.id == item_id
-    ).first()
+    db_item = (
+        db.query(models.ShoppingCartItem)
+        .filter(models.ShoppingCartItem.id == item_id)
+        .first()
+    )
 
     if not db_item:
         return None
@@ -696,8 +698,7 @@ def update_cart_item(
 
 
 def remove_item_from_cart(
-    db: Session,
-    item_id: int
+    db: Session, item_id: int
 ) -> Optional[models.ShoppingCartItem]:
     """
     Removes an item from a shopping cart.
@@ -709,9 +710,11 @@ def remove_item_from_cart(
     Returns:
         The deleted ShoppingCartItem model instance, or None if not found.
     """
-    db_item = db.query(models.ShoppingCartItem).filter(
-        models.ShoppingCartItem.id == item_id
-    ).first()
+    db_item = (
+        db.query(models.ShoppingCartItem)
+        .filter(models.ShoppingCartItem.id == item_id)
+        .first()
+    )
 
     if not db_item:
         return None
@@ -743,6 +746,7 @@ def clear_cart(db: Session, cart_id: int) -> bool:
 # Order CRUD Operations
 # ============================================================================
 
+
 def get_order(db: Session, order_id: int) -> Optional[models.Order]:
     """
     Retrieves an order by its ID.
@@ -762,7 +766,7 @@ def get_orders(
     skip: int = 0,
     limit: int = 100,
     user_id: Optional[int] = None,
-    order_status: Optional[str] = None
+    order_status: Optional[str] = None,
 ) -> List[models.Order]:
     """
     Retrieves a list of orders with optional filtering.
@@ -785,14 +789,12 @@ def get_orders(
     if order_status is not None:
         query = query.filter(models.Order.order_status == order_status)
 
-    return query.order_by(models.Order.order_date.desc()).offset(skip).limit(limit).all()
+    return (
+        query.order_by(models.Order.order_date.desc()).offset(skip).limit(limit).all()
+    )
 
 
-def create_order(
-    db: Session,
-    user_id: int,
-    order: schemas.OrderCreate
-) -> models.Order:
+def create_order(db: Session, user_id: int, order: schemas.OrderCreate) -> models.Order:
     """
     Creates a new order from a shopping cart.
 
@@ -818,17 +820,23 @@ def create_order(
     # Query inventories with FOR UPDATE
     locked_inventories = {}
     if product_ids:
-        inv_rows = db.query(models.Inventory).filter(
-            models.Inventory.product_id.in_(product_ids)
-        ).with_for_update().all()
+        inv_rows = (
+            db.query(models.Inventory)
+            .filter(models.Inventory.product_id.in_(product_ids))
+            .with_for_update()
+            .all()
+        )
         locked_inventories = {inv.product_id: inv for inv in inv_rows}
 
     # Query products with FOR UPDATE to compute totals (do not use for stock)
     locked_products = {}
     if product_ids:
-        prod_rows = db.query(models.Product).filter(
-            models.Product.id.in_(product_ids)
-        ).with_for_update().all()
+        prod_rows = (
+            db.query(models.Product)
+            .filter(models.Product.id.in_(product_ids))
+            .with_for_update()
+            .all()
+        )
         locked_products = {p.id: p for p in prod_rows}
 
     # Validate stock and compute total using the locked rows
@@ -843,7 +851,9 @@ def create_order(
 
         available = db_inventory.quantity_in_stock
         if available is None or available < item.quantity:
-            raise ValueError(f"Insufficient stock for product ID {item.product_id}. Available: {available}")
+            raise ValueError(
+                f"Insufficient stock for product ID {item.product_id}. Available: {available}"
+            )
 
         # Add to total using product price (product must exist)
         if db_product:
@@ -864,7 +874,7 @@ def create_order(
         cart_id=order.cart_id,
         address=order.address,
         order_status="pending",
-        total_amount=total_amount
+        total_amount=total_amount,
     )
     db.add(db_order)
 
@@ -883,9 +893,7 @@ def create_order(
 
 
 def update_order(
-    db: Session,
-    order_id: int,
-    order_update: schemas.OrderUpdate
+    db: Session, order_id: int, order_update: schemas.OrderUpdate
 ) -> Optional[models.Order]:
     """
     Updates an existing order's information.
@@ -934,6 +942,7 @@ def delete_order(db: Session, order_id: int) -> Optional[models.Order]:
 # Address CRUD Operations
 # ============================================================================
 
+
 def get_address(db: Session, address_id: int) -> Optional[models.Address]:
     """
     Retrieves an address by its ID.
@@ -949,10 +958,7 @@ def get_address(db: Session, address_id: int) -> Optional[models.Address]:
 
 
 def get_addresses(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100,
-    user_id: Optional[int] = None
+    db: Session, skip: int = 0, limit: int = 100, user_id: Optional[int] = None
 ) -> List[models.Address]:
     """
     Retrieves a list of addresses with optional filtering.
@@ -975,9 +981,7 @@ def get_addresses(
 
 
 def create_address(
-    db: Session,
-    user_id: int,
-    address: schemas.AddressCreate
+    db: Session, user_id: int, address: schemas.AddressCreate
 ) -> models.Address:
     """
     Creates a new address for a user.
@@ -993,8 +997,7 @@ def create_address(
     # If this is set as default, unset other default addresses
     if address.is_default:
         db.query(models.Address).filter(
-            models.Address.user_id == user_id,
-            models.Address.is_default == True
+            models.Address.user_id == user_id, models.Address.is_default == True
         ).update({"is_default": False})
 
     db_address = models.Address(
@@ -1004,7 +1007,7 @@ def create_address(
         state=address.state,
         country=address.country,
         postal_code=address.postal_code,
-        is_default=address.is_default
+        is_default=address.is_default,
     )
     db.add(db_address)
     db.commit()
@@ -1013,9 +1016,7 @@ def create_address(
 
 
 def update_address(
-    db: Session,
-    address_id: int,
-    address_update: schemas.AddressUpdate
+    db: Session, address_id: int, address_update: schemas.AddressUpdate
 ) -> Optional[models.Address]:
     """
     Updates an existing address.
@@ -1037,7 +1038,7 @@ def update_address(
         db.query(models.Address).filter(
             models.Address.user_id == db_address.user_id,
             models.Address.is_default == True,
-            models.Address.id != address_id
+            models.Address.id != address_id,
         ).update({"is_default": False})
 
     update_data = address_update.dict(exclude_unset=True)
@@ -1072,6 +1073,7 @@ def delete_address(db: Session, address_id: int) -> Optional[models.Address]:
 # Review CRUD Operations
 # ============================================================================
 
+
 def get_review(db: Session, review_id: int) -> Optional[models.Review]:
     """
     Retrieves a review by its ID.
@@ -1092,7 +1094,7 @@ def get_reviews(
     limit: int = 100,
     product_id: Optional[int] = None,
     user_id: Optional[int] = None,
-    min_rating: Optional[int] = None
+    min_rating: Optional[int] = None,
 ) -> List[models.Review]:
     """
     Retrieves a list of reviews with optional filtering.
@@ -1119,13 +1121,13 @@ def get_reviews(
     if min_rating is not None:
         query = query.filter(models.Review.rating >= min_rating)
 
-    return query.order_by(models.Review.created_at.desc()).offset(skip).limit(limit).all()
+    return (
+        query.order_by(models.Review.created_at.desc()).offset(skip).limit(limit).all()
+    )
 
 
 def create_review(
-    db: Session,
-    user_id: int,
-    review: schemas.ReviewCreate
+    db: Session, user_id: int, review: schemas.ReviewCreate
 ) -> models.Review:
     """
     Creates a new review for a product.
@@ -1142,7 +1144,7 @@ def create_review(
         user_id=user_id,
         product_id=review.product_id,
         rating=review.rating,
-        comment=review.comment
+        comment=review.comment,
     )
     db.add(db_review)
     db.commit()
@@ -1151,9 +1153,7 @@ def create_review(
 
 
 def update_review(
-    db: Session,
-    review_id: int,
-    review_update: schemas.ReviewUpdate
+    db: Session, review_id: int, review_update: schemas.ReviewUpdate
 ) -> Optional[models.Review]:
     """
     Updates an existing review.
@@ -1198,7 +1198,9 @@ def delete_review(db: Session, review_id: int) -> Optional[models.Review]:
     return db_review
 
 
-def moderate_review(db: Session, review_id: int, is_visible: bool) -> Optional[models.Review]:
+def moderate_review(
+    db: Session, review_id: int, is_visible: bool
+) -> Optional[models.Review]:
     """
     Moderates a review by setting its visibility (superadmin only).
 
@@ -1233,9 +1235,11 @@ def get_product_average_rating(db: Session, product_id: int) -> Optional[float]:
     """
     from sqlalchemy import func as sql_func
 
-    result = db.query(sql_func.avg(models.Review.rating)).filter(
-        models.Review.product_id == product_id
-    ).scalar()
+    result = (
+        db.query(sql_func.avg(models.Review.rating))
+        .filter(models.Review.product_id == product_id)
+        .scalar()
+    )
 
     return float(result) if result else None
 
@@ -1243,6 +1247,7 @@ def get_product_average_rating(db: Session, product_id: int) -> Optional[float]:
 # ============================================================================
 # Inventory CRUD Operations
 # ============================================================================
+
 
 def get_inventory(db: Session, inventory_id: int) -> Optional[models.Inventory]:
     """
@@ -1255,14 +1260,13 @@ def get_inventory(db: Session, inventory_id: int) -> Optional[models.Inventory]:
     Returns:
         The Inventory model instance, or None if not found.
     """
-    return db.query(models.Inventory).filter(
-        models.Inventory.id == inventory_id
-    ).first()
+    return (
+        db.query(models.Inventory).filter(models.Inventory.id == inventory_id).first()
+    )
 
 
 def get_inventory_by_product(
-    db: Session,
-    product_id: int
+    db: Session, product_id: int
 ) -> Optional[models.Inventory]:
     """
     Retrieves inventory by product ID.
@@ -1274,16 +1278,15 @@ def get_inventory_by_product(
     Returns:
         The Inventory model instance, or None if not found.
     """
-    return db.query(models.Inventory).filter(
-        models.Inventory.product_id == product_id
-    ).first()
+    return (
+        db.query(models.Inventory)
+        .filter(models.Inventory.product_id == product_id)
+        .first()
+    )
 
 
 def get_inventories(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100,
-    low_stock_only: bool = False
+    db: Session, skip: int = 0, limit: int = 100, low_stock_only: bool = False
 ) -> List[models.Inventory]:
     """
     Retrieves a list of inventory records with optional filtering.
@@ -1302,6 +1305,7 @@ def get_inventories(
     if low_stock_only:
         # Filter for items where quantity is at or below reorder level
         from sqlalchemy import and_
+
         query = query.filter(
             models.Inventory.quantity_in_stock <= models.Inventory.reorder_level
         )
@@ -1310,8 +1314,7 @@ def get_inventories(
 
 
 def create_inventory(
-    db: Session,
-    inventory: schemas.InventoryCreate
+    db: Session, inventory: schemas.InventoryCreate
 ) -> models.Inventory:
     """
     Creates a new inventory record for a product.
@@ -1327,7 +1330,7 @@ def create_inventory(
         product_id=inventory.product_id,
         quantity_in_stock=inventory.quantity_in_stock,
         reorder_level=inventory.reorder_level,
-        last_restocked_at=datetime.now() if inventory.quantity_in_stock > 0 else None
+        last_restocked_at=datetime.now() if inventory.quantity_in_stock > 0 else None,
     )
     db.add(db_inventory)
     db.commit()
@@ -1336,9 +1339,7 @@ def create_inventory(
 
 
 def update_inventory(
-    db: Session,
-    inventory_id: int,
-    inventory_update: schemas.InventoryUpdate
+    db: Session, inventory_id: int, inventory_update: schemas.InventoryUpdate
 ) -> Optional[models.Inventory]:
     """
     Updates an existing inventory record.
@@ -1370,9 +1371,7 @@ def update_inventory(
 
 
 def restock_inventory(
-    db: Session,
-    inventory_id: int,
-    quantity_to_add: int
+    db: Session, inventory_id: int, quantity_to_add: int
 ) -> Optional[models.Inventory]:
     """
     Restocks inventory by adding quantity.
@@ -1420,6 +1419,7 @@ def delete_inventory(db: Session, inventory_id: int) -> Optional[models.Inventor
 # Payment CRUD Operations
 # ============================================================================
 
+
 def get_payment(db: Session, payment_id: int) -> Optional[models.Payment]:
     """
     Retrieves a payment by its ID.
@@ -1435,8 +1435,7 @@ def get_payment(db: Session, payment_id: int) -> Optional[models.Payment]:
 
 
 def get_payment_by_transaction(
-    db: Session,
-    transaction_id: str
+    db: Session, transaction_id: str
 ) -> Optional[models.Payment]:
     """
     Retrieves a payment by transaction ID.
@@ -1448,9 +1447,11 @@ def get_payment_by_transaction(
     Returns:
         The Payment model instance, or None if not found.
     """
-    return db.query(models.Payment).filter(
-        models.Payment.transaction_id == transaction_id
-    ).first()
+    return (
+        db.query(models.Payment)
+        .filter(models.Payment.transaction_id == transaction_id)
+        .first()
+    )
 
 
 def get_payments(
@@ -1458,7 +1459,7 @@ def get_payments(
     skip: int = 0,
     limit: int = 100,
     order_id: Optional[int] = None,
-    payment_status: Optional[str] = None
+    payment_status: Optional[str] = None,
 ) -> List[models.Payment]:
     """
     Retrieves a list of payments with optional filtering.
@@ -1481,13 +1482,12 @@ def get_payments(
     if payment_status is not None:
         query = query.filter(models.Payment.payment_status == payment_status)
 
-    return query.order_by(models.Payment.created_at.desc()).offset(skip).limit(limit).all()
+    return (
+        query.order_by(models.Payment.created_at.desc()).offset(skip).limit(limit).all()
+    )
 
 
-def create_payment(
-    db: Session,
-    payment: schemas.PaymentCreate
-) -> models.Payment:
+def create_payment(db: Session, payment: schemas.PaymentCreate) -> models.Payment:
     """
     Creates a new payment record.
 
@@ -1503,7 +1503,7 @@ def create_payment(
         transaction_id=payment.transaction_id,
         payment_status=payment.payment_status,
         amount_paid=payment.amount_paid,
-        payment_date=datetime.now() if payment.payment_status == "completed" else None
+        payment_date=datetime.now() if payment.payment_status == "completed" else None,
     )
     db.add(db_payment)
     db.commit()
@@ -1512,9 +1512,7 @@ def create_payment(
 
 
 def update_payment(
-    db: Session,
-    payment_id: int,
-    payment_update: schemas.PaymentUpdate
+    db: Session, payment_id: int, payment_update: schemas.PaymentUpdate
 ) -> Optional[models.Payment]:
     """
     Updates an existing payment.
@@ -1569,10 +1567,8 @@ def delete_payment(db: Session, payment_id: int) -> Optional[models.Payment]:
 # Order Tracking CRUD Operations
 # ============================================================================
 
-def get_order_tracking(
-    db: Session,
-    tracking_id: int
-) -> Optional[models.OrderTracking]:
+
+def get_order_tracking(db: Session, tracking_id: int) -> Optional[models.OrderTracking]:
     """
     Retrieves an order tracking entry by its ID.
 
@@ -1583,16 +1579,15 @@ def get_order_tracking(
     Returns:
         The OrderTracking model instance, or None if not found.
     """
-    return db.query(models.OrderTracking).filter(
-        models.OrderTracking.id == tracking_id
-    ).first()
+    return (
+        db.query(models.OrderTracking)
+        .filter(models.OrderTracking.id == tracking_id)
+        .first()
+    )
 
 
 def get_order_tracking_history(
-    db: Session,
-    order_id: int,
-    skip: int = 0,
-    limit: int = 100
+    db: Session, order_id: int, skip: int = 0, limit: int = 100
 ) -> List[models.OrderTracking]:
     """
     Retrieves tracking history for a specific order.
@@ -1606,16 +1601,18 @@ def get_order_tracking_history(
     Returns:
         A list of OrderTracking model instances.
     """
-    return db.query(models.OrderTracking).filter(
-        models.OrderTracking.order_id == order_id
-    ).order_by(models.OrderTracking.timestamp.desc()).offset(skip).limit(limit).all()
+    return (
+        db.query(models.OrderTracking)
+        .filter(models.OrderTracking.order_id == order_id)
+        .order_by(models.OrderTracking.timestamp.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_all_tracking_entries(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100,
-    status: Optional[str] = None
+    db: Session, skip: int = 0, limit: int = 100, status: Optional[str] = None
 ) -> List[models.OrderTracking]:
     """
     Retrieves all tracking entries with optional filtering.
@@ -1634,12 +1631,16 @@ def get_all_tracking_entries(
     if status is not None:
         query = query.filter(models.OrderTracking.status == status)
 
-    return query.order_by(models.OrderTracking.timestamp.desc()).offset(skip).limit(limit).all()
+    return (
+        query.order_by(models.OrderTracking.timestamp.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def create_order_tracking(
-    db: Session,
-    tracking: schemas.OrderTrackingCreate
+    db: Session, tracking: schemas.OrderTrackingCreate
 ) -> models.OrderTracking:
     """
     Creates a new order tracking entry.
@@ -1655,7 +1656,7 @@ def create_order_tracking(
         order_id=tracking.order_id,
         status=tracking.status,
         location=tracking.location,
-        notes=tracking.notes
+        notes=tracking.notes,
     )
     db.add(db_tracking)
     db.commit()
@@ -1664,9 +1665,7 @@ def create_order_tracking(
 
 
 def update_order_tracking(
-    db: Session,
-    tracking_id: int,
-    tracking_update: schemas.OrderTrackingUpdate
+    db: Session, tracking_id: int, tracking_update: schemas.OrderTrackingUpdate
 ) -> Optional[models.OrderTracking]:
     """
     Updates an existing order tracking entry.
@@ -1693,8 +1692,7 @@ def update_order_tracking(
 
 
 def delete_order_tracking(
-    db: Session,
-    tracking_id: int
+    db: Session, tracking_id: int
 ) -> Optional[models.OrderTracking]:
     """
     Deletes an order tracking entry from the database.
@@ -1715,8 +1713,7 @@ def delete_order_tracking(
 
 
 def get_latest_tracking_status(
-    db: Session,
-    order_id: int
+    db: Session, order_id: int
 ) -> Optional[models.OrderTracking]:
     """
     Gets the latest tracking entry for an order.
@@ -1728,6 +1725,9 @@ def get_latest_tracking_status(
     Returns:
         The most recent OrderTracking model instance, or None if not found.
     """
-    return db.query(models.OrderTracking).filter(
-        models.OrderTracking.order_id == order_id
-    ).order_by(models.OrderTracking.timestamp.desc()).first()
+    return (
+        db.query(models.OrderTracking)
+        .filter(models.OrderTracking.order_id == order_id)
+        .order_by(models.OrderTracking.timestamp.desc())
+        .first()
+    )

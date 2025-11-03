@@ -1,6 +1,7 @@
 """
 Addresses router for managing customer addresses.
 """
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,16 @@ from .. import crud, models, schemas
 from ..database import get_db
 from ..dependencies import get_current_active_user
 
-router = APIRouter(
-    prefix="/addresses",
-    tags=["addresses"]
-)
+router = APIRouter(prefix="/addresses", tags=["addresses"])
 
 
 @router.post(
-    "/",
-    response_model=schemas.AddressResponse,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=schemas.AddressResponse, status_code=status.HTTP_201_CREATED
 )
 def create_address(
     address: schemas.AddressCreate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create a new address for the authenticated user.
@@ -45,7 +41,7 @@ def get_addresses(
     skip: int = 0,
     limit: int = 100,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a list of addresses for the authenticated user.
@@ -60,12 +56,7 @@ def get_addresses(
         A list of the user's addresses.
     """
     # Only return addresses for the current user
-    addresses = crud.get_addresses(
-        db,
-        skip=skip,
-        limit=limit,
-        user_id=current_user.id
-    )
+    addresses = crud.get_addresses(db, skip=skip, limit=limit, user_id=current_user.id)
     return addresses
 
 
@@ -73,7 +64,7 @@ def get_addresses(
 def get_address(
     address_id: int,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a specific address by ID.
@@ -93,14 +84,14 @@ def get_address(
     if address is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Address with ID {address_id} not found"
+            detail=f"Address with ID {address_id} not found",
         )
 
     # Verify the address belongs to the current user
     if address.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only view your own addresses"
+            detail="You can only view your own addresses",
         )
 
     return address
@@ -111,7 +102,7 @@ def update_address(
     address_id: int,
     address_update: schemas.AddressUpdate,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update an address's information.
@@ -133,20 +124,18 @@ def update_address(
     if address is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Address with ID {address_id} not found"
+            detail=f"Address with ID {address_id} not found",
         )
 
     # Verify the address belongs to the current user
     if address.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only update your own addresses"
+            detail="You can only update your own addresses",
         )
 
     updated_address = crud.update_address(
-        db,
-        address_id=address_id,
-        address_update=address_update
+        db, address_id=address_id, address_update=address_update
     )
     return updated_address
 
@@ -155,7 +144,7 @@ def update_address(
 def delete_address(
     address_id: int,
     current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete an address.
@@ -176,16 +165,15 @@ def delete_address(
     if address is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Address with ID {address_id} not found"
+            detail=f"Address with ID {address_id} not found",
         )
 
     # Verify the address belongs to the current user
     if address.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own addresses"
+            detail="You can only delete your own addresses",
         )
 
     deleted_address = crud.delete_address(db, address_id=address_id)
     return deleted_address
-

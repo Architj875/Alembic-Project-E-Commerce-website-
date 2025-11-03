@@ -1,6 +1,7 @@
 """
 Product Categories router for managing product categories.
 """
+
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,21 +11,18 @@ from .. import crud, models, schemas
 from ..dependencies import require_admin
 from ..database import get_db
 
-router = APIRouter(
-    prefix="/categories",
-    tags=["product-categories"]
-)
+router = APIRouter(prefix="/categories", tags=["product-categories"])
 
 
 @router.post(
     "/",
     response_model=schemas.ProductCategoryResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 def create_category(
     category: schemas.ProductCategoryCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Create a new product category.
@@ -44,7 +42,7 @@ def create_category(
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {category.product_id} not found"
+            detail=f"Product with ID {category.product_id} not found",
         )
 
     return crud.create_product_category(db=db, category=category)
@@ -56,7 +54,7 @@ def get_categories(
     limit: int = 100,
     product_id: Optional[int] = None,
     is_active: Optional[bool] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Retrieve a list of product categories with optional filtering.
@@ -72,11 +70,7 @@ def get_categories(
         A list of product categories.
     """
     categories = crud.get_product_categories(
-        db,
-        skip=skip,
-        limit=limit,
-        product_id=product_id,
-        is_active=is_active
+        db, skip=skip, limit=limit, product_id=product_id, is_active=is_active
     )
     return categories
 
@@ -100,7 +94,7 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
     if category is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with ID {category_id} not found"
+            detail=f"Category with ID {category_id} not found",
         )
     return category
 
@@ -110,7 +104,7 @@ def update_category(
     category_id: int,
     category_update: schemas.ProductCategoryUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_admin)
+    current_user: models.User = Depends(require_admin),
 ):
     """
     Update a product category's information.
@@ -127,20 +121,22 @@ def update_category(
         HTTPException: If category is not found.
     """
     category = crud.update_product_category(
-        db,
-        category_id=category_id,
-        category_update=category_update
+        db, category_id=category_id, category_update=category_update
     )
     if category is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with ID {category_id} not found"
+            detail=f"Category with ID {category_id} not found",
         )
     return category
 
 
 @router.delete("/{category_id}", response_model=schemas.ProductCategoryResponse)
-def delete_category(category_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin),
+):
     """
     Delete a product category.
 
@@ -158,7 +154,6 @@ def delete_category(category_id: int, db: Session = Depends(get_db), current_use
     if category is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Category with ID {category_id} not found"
+            detail=f"Category with ID {category_id} not found",
         )
     return category
-

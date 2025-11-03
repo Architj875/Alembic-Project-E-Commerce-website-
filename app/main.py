@@ -17,7 +17,7 @@ from .routers import (
 app = FastAPI(
     title="FastAPI E-Commerce Platform",
     description="E-commerce API with role-based access control",
-    version="2.0.0"
+    version="2.0.0",
 )
 
 # Include routers
@@ -86,8 +86,8 @@ def root():
             "Shopping cart",
             "Orders and payments",
             "Reviews and ratings",
-            "Inventory tracking"
+            "Inventory tracking",
         ],
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
     }
