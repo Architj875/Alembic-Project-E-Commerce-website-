@@ -64,27 +64,28 @@ def create_order(
 
     # Check stock availability for all items
     for item in cart.items:
-        product = crud.get_product(db, product_id=item.product_id)
-        if not product:
+        inventory = crud.get_inventory_by_product(db, product_id=item.product_id)
+        if not inventory:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product with ID {item.product_id} not found"
+                detail=f"Inventory not found for product ID {item.product_id}"
             )
-        if product.quantity < item.quantity:
+        if inventory.quantity_in_stock < item.quantity:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient stock for {product.name}. Available: {product.quantity}"
+                detail=f"Insufficient stock for product ID {item.product_id}. Available: {inventory.quantity_in_stock}"
             )
 
     # Create order for current user
-    db_order = crud.create_order(db=db, customer_id=current_user.id, order=order)
-
-    # Update product quantities
-    for item in cart.items:
-        product = crud.get_product(db, product_id=item.product_id)
-        if product:
-            product.quantity -= item.quantity
-            db.commit()
+    # Create order for current user — CRUD will atomically decrement stock and clear cart
+    try:
+        db_order = crud.create_order(db=db, user_id=current_user.id, order=order)
+    except ValueError as ve:
+        # Map validation errors from CRUD layer to HTTP responses
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
 
     return db_order
 
@@ -115,7 +116,7 @@ def get_orders(
         db,
         skip=skip,
         limit=limit,
-        customer_id=current_user.id,
+        user_id=current_user.id,
         order_status=order_status
     )
     return orders

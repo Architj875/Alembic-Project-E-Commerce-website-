@@ -116,7 +116,7 @@ class ProductCreate(BaseModel):
     name: str = Field(..., description="Product name")
     description: Optional[str] = Field(None, description="Product description")
     price: Decimal = Field(..., gt=0, description="Product price (must be greater than 0)")
-    quantity: int = Field(0, ge=0, description="Stock quantity (must be >= 0)")
+    # Inventory is managed separately via the Inventory endpoints.
 
 
 class ProductUpdate(BaseModel):
@@ -124,7 +124,7 @@ class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Product name")
     description: Optional[str] = Field(None, description="Product description")
     price: Optional[Decimal] = Field(None, gt=0, description="Product price (must be greater than 0)")
-    quantity: Optional[int] = Field(None, ge=0, description="Stock quantity (must be >= 0)")
+    # quantity removed; inventory changes should be made through inventory endpoints.
 
 
 class ProductResponse(BaseModel):
@@ -134,7 +134,7 @@ class ProductResponse(BaseModel):
     name: str
     description: Optional[str] = None
     price: Decimal
-    quantity: int
+    # quantity removed; use InventoryResponse for stock information
     created_at: datetime
     updated_at: Optional[datetime] = None
 
@@ -207,7 +207,6 @@ class ShoppingCartItemResponse(BaseModel):
 class ShoppingCartResponse(BaseModel):
     """Schema for shopping cart response (response model)."""
     id: int
-    customer_id: int
     last_modified: datetime
     created_at: datetime
     items: List[ShoppingCartItemResponse] = []
@@ -237,7 +236,7 @@ class OrderUpdate(BaseModel):
 class OrderResponse(BaseModel):
     """Schema for order response (response model)."""
     id: int
-    customer_id: int
+    #customer_id: int
     cart_id: Optional[int] = None
     address: str
     order_status: str
@@ -276,7 +275,7 @@ class AddressUpdate(BaseModel):
 class AddressResponse(BaseModel):
     """Schema for address response (response model)."""
     id: int
-    customer_id: int
+    user_id: int
     address: str
     city: str
     state: str
@@ -440,7 +439,7 @@ class SuperadminProductCreate(BaseModel):
     description: Optional[str] = None
     price: Decimal = Field(..., gt=0, description="Product price must be greater than 0")
     sku: str
-    quantity: int = Field(default=0, ge=0, description="Product quantity must be >= 0")
+    # quantity removed; inventory should be created/updated via Inventory APIs
 
 
 class SuperadminProductUpdate(BaseModel):
@@ -449,4 +448,4 @@ class SuperadminProductUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[Decimal] = Field(None, gt=0, description="Product price must be greater than 0")
     sku: Optional[str] = None
-    quantity: Optional[int] = Field(None, ge=0, description="Product quantity must be >= 0")
+    # quantity removed; inventory should be created/updated via Inventory APIs

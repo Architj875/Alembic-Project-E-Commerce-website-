@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
+from ..dependencies import require_admin
 from ..database import get_db
 
 router = APIRouter(
@@ -22,7 +23,8 @@ router = APIRouter(
 )
 def create_tracking_entry(
     tracking: schemas.OrderTrackingCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Create a new tracking entry for an order.
@@ -175,7 +177,8 @@ def get_latest_tracking_status(order_id: int, db: Session = Depends(get_db)):
 def update_tracking_entry(
     tracking_id: int,
     tracking_update: schemas.OrderTrackingUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Update a tracking entry's information.
@@ -205,7 +208,7 @@ def update_tracking_entry(
 
 
 @router.delete("/{tracking_id}", response_model=schemas.OrderTrackingResponse)
-def delete_tracking_entry(tracking_id: int, db: Session = Depends(get_db)):
+def delete_tracking_entry(tracking_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     """
     Delete a tracking entry.
 

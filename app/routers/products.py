@@ -6,7 +6,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from .. import crud, schemas
+from .. import crud, schemas, models
+from ..dependencies import require_admin
 from ..database import get_db
 
 router = APIRouter(
@@ -18,7 +19,8 @@ router = APIRouter(
 @router.post("/", response_model=schemas.ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(
     product: schemas.ProductCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Create a new product.
@@ -125,7 +127,8 @@ def get_product_by_sku(
 def update_product(
     product_id: int,
     product: schemas.ProductUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Update an existing product.
@@ -153,7 +156,8 @@ def update_product(
 @router.delete("/{product_id}", response_model=schemas.ProductResponse)
 def delete_product(
     product_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Delete a product.
@@ -175,4 +179,3 @@ def delete_product(
             detail=f"Product with ID {product_id} not found"
         )
     return db_product
-

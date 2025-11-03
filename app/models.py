@@ -87,7 +87,8 @@ class Product(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)  # Decimal with 2 decimal places
-    quantity = Column(Integer, nullable=False, default=0)  # Stock quantity
+    # NOTE: stock quantity is tracked in the Inventory table (one-to-one). The
+    # `quantity` column was removed to make Inventory the single source of truth.
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -97,7 +98,7 @@ class Product(Base):
     categories = relationship("ProductCategory", back_populates="product")
     cart_items = relationship("ShoppingCartItem", back_populates="product")
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
-    inventory = relationship("Inventory", back_populates="product", uselist=False, cascade="all, delete-orphan")
+    # inventory = relationship("Inventory", back_populates="product", uselist=False, cascade="all, delete-orphan")
 
 
 class ProductCategory(Base):
@@ -268,7 +269,7 @@ class Inventory(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relationship (One-to-One)
-    product = relationship("Product", back_populates="inventory", uselist=False)
+    # product = relationship("Product", back_populates="inventory", uselist=False)
 
 
 class Payment(Base):

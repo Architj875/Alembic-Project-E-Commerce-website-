@@ -8,7 +8,7 @@ from . import models, schemas
 from .auth import get_password_hash, generate_session_id
 
 
-# User CRUD Operations (merged from User and Customer)
+# User CRUD Operations
 
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
     """
@@ -377,7 +377,6 @@ def create_product(db: Session, product: schemas.ProductCreate) -> models.Produc
         name=product.name,
         description=product.description,
         price=product.price,
-        quantity=product.quantity
     )
     db.add(db_product)
     db.commit()
@@ -805,16 +804,61 @@ def create_order(
     Returns:
         The newly created Order model instance.
     """
-    # Get cart to calculate total
+    # Get cart to calculate total and perform stock operations atomically
     cart = get_shopping_cart(db, order.cart_id)
+    if not cart:
+        raise ValueError(f"Cart with ID {order.cart_id} not found")
+
     total_amount = Decimal("0.00")
 
-    if cart and cart.items:
-        for item in cart.items:
-            product = get_product(db, item.product_id)
-            if product:
-                total_amount += product.price * item.quantity
+    # Acquire row-level locks for all inventory/product rows involved in this cart to
+    # prevent concurrent modifications (SELECT ... FOR UPDATE).
+    product_ids = [item.product_id for item in cart.items]
 
+    # Query inventories with FOR UPDATE
+    locked_inventories = {}
+    if product_ids:
+        inv_rows = db.query(models.Inventory).filter(
+            models.Inventory.product_id.in_(product_ids)
+        ).with_for_update().all()
+        locked_inventories = {inv.product_id: inv for inv in inv_rows}
+
+    # Query products with FOR UPDATE to compute totals (do not use for stock)
+    locked_products = {}
+    if product_ids:
+        prod_rows = db.query(models.Product).filter(
+            models.Product.id.in_(product_ids)
+        ).with_for_update().all()
+        locked_products = {p.id: p for p in prod_rows}
+
+    # Validate stock and compute total using the locked rows
+    for item in cart.items:
+        db_inventory = locked_inventories.get(item.product_id)
+        db_product = locked_products.get(item.product_id)
+
+        # Inventory is the sole source of stock truth. If no inventory row exists
+        # for the product, treat it as unavailable.
+        if db_inventory is None:
+            raise ValueError(f"Inventory not found for product ID {item.product_id}")
+
+        available = db_inventory.quantity_in_stock
+        if available is None or available < item.quantity:
+            raise ValueError(f"Insufficient stock for product ID {item.product_id}. Available: {available}")
+
+        # Add to total using product price (product must exist)
+        if db_product:
+            total_amount += db_product.price * item.quantity
+
+    # Decrement locked rows now that validation passed
+    for item in cart.items:
+        db_inventory = locked_inventories.get(item.product_id)
+        db_product = locked_products.get(item.product_id)
+
+        if db_inventory is not None:
+            db_inventory.quantity_in_stock -= item.quantity
+        # Do not mutate Product stock here; Inventory is the canonical stock table.
+
+    # Create order record
     db_order = models.Order(
         user_id=user_id,
         cart_id=order.cart_id,
@@ -823,8 +867,18 @@ def create_order(
         total_amount=total_amount
     )
     db.add(db_order)
+
+    # Commit everything together
     db.commit()
     db.refresh(db_order)
+
+    # After creating the order, clear the shopping cart so future adds start fresh
+    try:
+        clear_cart(db, order.cart_id)
+    except Exception:
+        # Do not fail the order if clearing the cart fails; could log here
+        pass
+
     return db_order
 
 
@@ -1305,6 +1359,11 @@ def update_inventory(
     for key, value in update_data.items():
         setattr(db_inventory, key, value)
 
+    # If quantity changed, sync it to the product quantity
+    if "quantity_in_stock" in update_data:
+        # Inventory is single source-of-truth for stock; do not mirror into Product
+        pass
+
     db.commit()
     db.refresh(db_inventory)
     return db_inventory
@@ -1332,7 +1391,7 @@ def restock_inventory(
 
     db_inventory.quantity_in_stock += quantity_to_add
     db_inventory.last_restocked_at = datetime.now()
-
+    # Inventory is the canonical stock; do not mirror into Product
     db.commit()
     db.refresh(db_inventory)
     return db_inventory

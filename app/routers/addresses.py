@@ -37,7 +37,7 @@ def create_address(
     Returns:
         The created address with all details.
     """
-    return crud.create_address(db=db, customer_id=current_user.id, address=address)
+    return crud.create_address(db=db, user_id=current_user.id, address=address)
 
 
 @router.get("/", response_model=List[schemas.AddressResponse])
@@ -64,7 +64,7 @@ def get_addresses(
         db,
         skip=skip,
         limit=limit,
-        customer_id=current_user.id
+        user_id=current_user.id
     )
     return addresses
 

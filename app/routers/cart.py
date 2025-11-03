@@ -33,9 +33,9 @@ def get_cart(
         The user's shopping cart with all items.
     """
     # Get or create cart for current user
-    cart = crud.get_customer_cart(db, customer_id=current_user.id)
+    cart = crud.get_customer_cart(db, user_id=current_user.id)
     if not cart:
-        cart = crud.create_shopping_cart(db, customer_id=current_user.id)
+        cart = crud.create_shopping_cart(db, user_id=current_user.id)
 
     return cart
 
@@ -72,17 +72,19 @@ def add_item(
             detail=f"Product with ID {item.product_id} not found"
         )
 
-    # Check if product has enough stock
-    if product.quantity < item.quantity:
+    # Check inventory for stock (Inventory is canonical)
+    inventory = crud.get_inventory_by_product(db, product_id=item.product_id)
+    if not inventory or inventory.quantity_in_stock < item.quantity:
+        available = inventory.quantity_in_stock if inventory else 0
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Insufficient stock. Available: {product.quantity}"
+            detail=f"Insufficient stock. Available: {available}"
         )
 
     # Get or create cart for current user
-    cart = crud.get_customer_cart(db, customer_id=current_user.id)
+    cart = crud.get_customer_cart(db, user_id=current_user.id)
     if not cart:
-        cart = crud.create_shopping_cart(db, customer_id=current_user.id)
+        cart = crud.create_shopping_cart(db, user_id=current_user.id)
 
     # Add item to cart
     cart_item = crud.add_item_to_cart(db, cart_id=cart.id, item=item)
@@ -133,12 +135,13 @@ def update_item(
             detail="You can only update items in your own cart"
         )
 
-    # Check product stock
-    product = crud.get_product(db, product_id=cart_item.product_id)
-    if product and product.quantity < item_update.quantity:
+    # Check product inventory for stock
+    inventory = crud.get_inventory_by_product(db, product_id=cart_item.product_id)
+    if not inventory or inventory.quantity_in_stock < item_update.quantity:
+        available = inventory.quantity_in_stock if inventory else 0
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Insufficient stock. Available: {product.quantity}"
+            detail=f"Insufficient stock. Available: {available}"
         )
 
     # Update item
@@ -212,7 +215,7 @@ def clear_cart(
         HTTPException: If cart is not found.
     """
     # Get current user's cart
-    cart = crud.get_customer_cart(db, customer_id=current_user.id)
+    cart = crud.get_customer_cart(db, user_id=current_user.id)
     if not cart:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

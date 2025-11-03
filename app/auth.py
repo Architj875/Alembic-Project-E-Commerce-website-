@@ -4,7 +4,6 @@ Authentication utilities for password hashing and JWT token management.
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import secrets
-
 import bcrypt
 from jose import JWTError, jwt
 

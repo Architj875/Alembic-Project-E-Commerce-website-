@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
+from ..dependencies import require_admin
 from ..database import get_db
 
 router = APIRouter(
@@ -22,7 +23,8 @@ router = APIRouter(
 )
 def create_inventory(
     inventory: schemas.InventoryCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Create a new inventory record for a product.
@@ -144,7 +146,8 @@ def get_inventory_by_product(product_id: int, db: Session = Depends(get_db)):
 def update_inventory(
     inventory_id: int,
     inventory_update: schemas.InventoryUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Update an inventory record's information.
@@ -177,7 +180,8 @@ def update_inventory(
 def restock_inventory(
     inventory_id: int,
     restock: schemas.InventoryRestock,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Restock inventory by adding quantity.
@@ -207,7 +211,8 @@ def restock_inventory(
 
 
 @router.delete("/{inventory_id}", response_model=schemas.InventoryResponse)
-def delete_inventory(inventory_id: int, db: Session = Depends(get_db)):
+def delete_inventory(inventory_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
+    
     """
     Delete an inventory record.
 

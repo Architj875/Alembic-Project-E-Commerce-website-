@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from .. import crud, models, schemas
+from ..dependencies import require_admin
 from ..database import get_db
 
 router = APIRouter(
@@ -22,7 +23,8 @@ router = APIRouter(
 )
 def create_category(
     category: schemas.ProductCategoryCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Create a new product category.
@@ -107,7 +109,8 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
 def update_category(
     category_id: int,
     category_update: schemas.ProductCategoryUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin)
 ):
     """
     Update a product category's information.
@@ -137,7 +140,7 @@ def update_category(
 
 
 @router.delete("/{category_id}", response_model=schemas.ProductCategoryResponse)
-def delete_category(category_id: int, db: Session = Depends(get_db)):
+def delete_category(category_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(require_admin)):
     """
     Delete a product category.
 
